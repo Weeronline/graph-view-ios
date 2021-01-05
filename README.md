@@ -1,3 +1,3 @@
-# GraphView
+# Graph View
 
-A description of this package.
+A framework to graph data in IOS. Graph View is used on the Weeronline's iOS app
