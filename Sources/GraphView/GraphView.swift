@@ -1,6 +1,7 @@
+#if canImport(UIKit)
 import UIKit
 
-class GraphView: UIView {
+public class GraphView: UIView {
     
     var isScrolling = false
     var barWidth: CGFloat = 20
@@ -8,7 +9,7 @@ class GraphView: UIView {
     private var temporalNumberOfItems = 10
     private var temportalColorForVerticalLine: UIColor? = UIColor.red
     
-    override func draw(_ rect: CGRect) {
+    public override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else {
           return
         }
@@ -16,7 +17,6 @@ class GraphView: UIView {
         addGraphVerticalLines(size: rect.size)
        
         context.saveGState()
-
     }
     
     // MARK: - Drawing
@@ -40,3 +40,5 @@ class GraphView: UIView {
     }
     
 }
+
+#endif
