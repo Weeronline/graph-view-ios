@@ -28,7 +28,7 @@ public class GraphView: UIView {
             }
 
             let linePath = UIBezierPath()
-
+            
             let xAxis = barWidth * CGFloat(index)
             linePath.move(to: CGPoint(x: xAxis, y: 0))
             linePath.addLine(to: CGPoint(x: xAxis, y: size.height))

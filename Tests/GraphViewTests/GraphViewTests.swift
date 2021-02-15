@@ -1,6 +1,6 @@
-
 import XCTest
 @testable import GraphView
+#if canImport(UIKit)
 
 final class GraphViewTests: XCTestCase {
     let graphView = GraphView(frame: CGRect.zero)
@@ -9,8 +9,6 @@ final class GraphViewTests: XCTestCase {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
-//        XCTAssertEqual(, "Hello, World!")
-//        GraphView(
     }
 
     static var allTests = [
@@ -18,3 +16,4 @@ final class GraphViewTests: XCTestCase {
     ]
 }
 
+#endif
