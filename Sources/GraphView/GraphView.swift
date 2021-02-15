@@ -1,8 +1,23 @@
 #if canImport(UIKit)
 import UIKit
 
+@objc
+protocol GraphViewDataSource: AnyObject {
+    func numberOfItems(in graphView: GraphView) -> Int
+    func graphView(_ graphView: GraphView, pointForItemAt index: Int) -> CGFloat
+    @objc optional func graphColor(in graphView: GraphView) -> UIColor
+    
+    @objc optional func graphView(_ graphView: GraphView, colorForVerticalLineAt index: Int) -> UIColor?
+    @objc optional func graphView(_ graphView: GraphView, colorForVerticalBarBackgroundAt index: Int) -> UIColor?
+    
+    @objc optional func numberOfHorizontalLines(in graphView: GraphView) -> Int
+    @objc optional func graphView(_ graphView: GraphView, horizontalLineForItemAt index: Int) -> Double
+    @objc optional func horizontalLineColor(in graphView: GraphView) -> UIColor
+}
 
 public class GraphView: UIView {
+    
+    @IBOutlet weak var dataSource: GraphViewDataSource?
     
     var isScrolling = false
     var barWidth: CGFloat = 60
@@ -10,15 +25,13 @@ public class GraphView: UIView {
     private var temporalNumberOfItems = 10
     private var temportalColorForVerticalLine: UIColor? = UIColor.red
     private let temporalHorizontalLines: [CGFloat] = [0.0, 0.04, 0.2, 0.5, 0.88, 0.9, 1.0]
-    private let temporalPoints: [CGFloat] = [0.3, 0.04, 0.2, 0.5, 0.88,
-                                             0.9, 1.0, 0.1, 0.7, 0.3]
     
     public override func draw(_ rect: CGRect) {
-        guard let context = UIGraphicsGetCurrentContext() else {
+        guard let context = UIGraphicsGetCurrentContext(), let dataSource = dataSource  else {
           return
         }
         
-        addGraphPoints(size: rect.size)
+        addGraphPoints(dataSource: dataSource, size: rect.size)
         addGraphVerticalLines(size: rect.size)
         addGraphHorizontalLines(size: rect.size)
        
@@ -27,7 +40,7 @@ public class GraphView: UIView {
     
     // MARK: - Drawing
     
-    private func addGraphPoints(size: CGSize) {
+    private func addGraphPoints(dataSource: GraphViewDataSource, size: CGSize) {
         let maxValue = 1
         
         let columnXPoint = { (column: Int) -> CGFloat in
@@ -40,8 +53,8 @@ public class GraphView: UIView {
         }
                 
         var points = [CGPoint]()
-        for index in 0..<temporalPoints.count {
-            let value = temporalPoints[index]
+        for index in 0..<dataSource.numberOfItems(in: self) {
+            let value = dataSource.graphView(self, pointForItemAt: index)
             points.append(CGPoint(x: columnXPoint(index), y: columnYPoint(value)))
         }
         
