@@ -15,10 +15,17 @@ protocol GraphViewDataSource: AnyObject {
     @objc optional func horizontalLineColor(in graphView: GraphView) -> UIColor
 }
 
+@objc
+protocol GraphViewDelegate: AnyObject {
+    @objc optional func graphView(_ graphView: GraphView, didSelectBarAt index: Int)
+    @objc optional func graphView(_ graphView: GraphView, widthForBarAt index: Int) -> CGFloat
+}
+
 public class GraphView: UIView {
     
     @IBOutlet weak var dataSource: GraphViewDataSource?
-    
+    @IBOutlet weak var delegate: GraphViewDelegate?
+
     var isScrolling = false
     var barWidth: CGFloat = 60
     
@@ -30,6 +37,8 @@ public class GraphView: UIView {
         guard let context = UIGraphicsGetCurrentContext(), let dataSource = dataSource  else {
           return
         }
+        
+        barWidth = delegate?.graphView?(self, widthForBarAt: 0) ?? 20.0
         
         addGraphPoints(dataSource: dataSource, size: rect.size)
         addGraphVerticalLines(size: rect.size)
