@@ -7,47 +7,64 @@ final class GraphViewTests: XCTestCase {
 
     override func setUpWithError() throws {
         UIGraphicsBeginImageContext(CGSize(width: 100.0, height: 100.0))
+                
+        let items: [CGFloat] = [0.1, 0.2, 0.3, 0.5, 0.8, 0.7, 0.8, 0.7, 0.6, 0.5]
+        
+        let graphViewDataSourceTests = GraphViewDataSourceTests(items: items)
+        let graphViewDelegateTests = GraphViewDelegateTests(barsWidth: 20)
+        
+        graphView.dataSource = graphViewDataSourceTests
+        graphView.delegate = graphViewDelegateTests
+        
+        graphView.draw(CGRect.zero)
     }
     
     override func tearDownWithError() throws {
         UIGraphicsEndImageContext()
     }
     
-    func testDataSourceAndDelegate() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        let graphViewDataSourceTests = GraphViewDataSourceTests()
-        let graphViewDelegateTests = GraphViewDelegateTests()
-        
-        graphView.dataSource = graphViewDataSourceTests
-        graphView.delegate = graphViewDelegateTests
-        
-        graphView.draw(CGRect.zero)
-
-        XCTAssertEqual(10, graphView.numberOfItems())
-        XCTAssertEqual(1.0, graphView.item(atIndex: 0))
+    func testDataSourceItems() {
+        XCTAssertEqual(10, graphView.numberOfItems)
+        XCTAssertEqual(0.1, graphView.item(atIndex: 0))
+        XCTAssertEqual(0.8, graphView.item(atIndex: 4))
+        XCTAssertEqual(0.5, graphView.item(atIndex: 9))
+    }
+    
+    func testDelegateBarsWidth() {
         XCTAssertEqual(20, graphView.barWidth)
     }
 
     static var allTests = [
-        ("testDataSourceAndDelegate", testDataSourceAndDelegate),
+        ("testDataSourceItems", testDataSourceItems),
+        ("testDelegateBarsWidth", testDelegateBarsWidth),
     ]
 }
 
 class GraphViewDataSourceTests: GraphViewDataSource {
+    let items: [CGFloat]
+    
+    init(items: [CGFloat]) {
+        self.items = items
+    }
+    
     func numberOfItems(in graphView: GraphView) -> Int {
-        return 10
+        return items.count
     }
     
     func graphView(_ graphView: GraphView, pointForItemAt index: Int) -> CGFloat {
-        return 1
+        return items[index]
     }
 }
 
 class GraphViewDelegateTests: GraphViewDelegate {
+    let barsWidth: CGFloat
+    
+    init(barsWidth: CGFloat) {
+        self.barsWidth = barsWidth
+    }
+    
     func graphView(_ graphView: GraphView, widthForBarAt index: Int) -> CGFloat {
-        return 20
+        return barsWidth
     }
 }
 

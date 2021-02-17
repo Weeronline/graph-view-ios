@@ -2,7 +2,7 @@
 import UIKit
 
 @objc
-protocol GraphViewDataSource: AnyObject {
+public protocol GraphViewDataSource: AnyObject {
     func numberOfItems(in graphView: GraphView) -> Int
     func graphView(_ graphView: GraphView, pointForItemAt index: Int) -> CGFloat
     @objc optional func graphColor(in graphView: GraphView) -> UIColor
@@ -16,7 +16,7 @@ protocol GraphViewDataSource: AnyObject {
 }
 
 @objc
-protocol GraphViewDelegate: AnyObject {
+public protocol GraphViewDelegate: AnyObject {
     @objc optional func graphView(_ graphView: GraphView, didSelectBarAt index: Int)
     @objc optional func graphView(_ graphView: GraphView, widthForBarAt index: Int) -> CGFloat
 }
@@ -26,6 +26,8 @@ public class GraphView: UIView {
     @IBOutlet weak var dataSource: GraphViewDataSource?
     @IBOutlet weak var delegate: GraphViewDelegate?
 
+    open private(set) var numberOfItems: Int = 0
+    
     var isScrolling = false
     var barWidth: CGFloat = 60
     
@@ -39,12 +41,16 @@ public class GraphView: UIView {
         guard let context = UIGraphicsGetCurrentContext(), let dataSource = dataSource else {
           return
         }
-        
-        items.removeAll()
-        
+                  
         barWidth = delegate?.graphView?(self, widthForBarAt: 0) ?? 20.0
         
-        addGraphPoints(dataSource: dataSource, size: rect.size)
+        numberOfItems = dataSource.numberOfItems(in: self)
+        
+        items = (0..<numberOfItems).map { (index) in
+            dataSource.graphView(self, pointForItemAt: index)
+        }
+        
+        addGraphPoints(size: rect.size)
         addGraphVerticalLines(size: rect.size)
         addGraphHorizontalLines(size: rect.size)
        
@@ -53,7 +59,7 @@ public class GraphView: UIView {
     
     // MARK: - Drawing
     
-    private func addGraphPoints(dataSource: GraphViewDataSource, size: CGSize) {
+    private func addGraphPoints(size: CGSize) {
         let maxValue = 1
         
         let columnXPoint = { (column: Int) -> CGFloat in
@@ -66,15 +72,12 @@ public class GraphView: UIView {
         }
         
         var points = [CGPoint]()
-        for index in 0..<dataSource.numberOfItems(in: self) {
-            let value = dataSource.graphView(self, pointForItemAt: index)
-            items.append(value)
+        for (index,value) in items.enumerated() {
             points.append(CGPoint(x: columnXPoint(index), y: columnYPoint(value)))
         }
         
         points.insert(CGPoint(x:columnXPoint(0), y: columnYPoint(0)), at: 0)
         points.append(CGPoint(x:columnXPoint(points.count), y: columnYPoint(0)))
-        
         
         let bezierPath = UIBezierPath(quadCurve: points)
                 
@@ -115,10 +118,6 @@ public class GraphView: UIView {
     }
     
     // Functions
-    
-    open func numberOfItems() -> Int {
-        return items.count
-    }
     
     open func item(atIndex index: Int) -> CGFloat {
         return items[index]
