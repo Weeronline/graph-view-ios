@@ -29,14 +29,18 @@ public class GraphView: UIView {
     var isScrolling = false
     var barWidth: CGFloat = 60
     
+    private var items = [CGFloat]()
+
     private var temporalNumberOfItems = 10
     private var temportalColorForVerticalLine: UIColor? = UIColor.red
     private let temporalHorizontalLines: [CGFloat] = [0.0, 0.04, 0.2, 0.5, 0.88, 0.9, 1.0]
     
     public override func draw(_ rect: CGRect) {
-        guard let context = UIGraphicsGetCurrentContext(), let dataSource = dataSource  else {
+        guard let context = UIGraphicsGetCurrentContext(), let dataSource = dataSource else {
           return
         }
+        
+        items.removeAll()
         
         barWidth = delegate?.graphView?(self, widthForBarAt: 0) ?? 20.0
         
@@ -60,10 +64,11 @@ public class GraphView: UIView {
             let yPoint = graphPoint / CGFloat(maxValue) * size.height
             return size.height - yPoint
         }
-                
+        
         var points = [CGPoint]()
         for index in 0..<dataSource.numberOfItems(in: self) {
             let value = dataSource.graphView(self, pointForItemAt: index)
+            items.append(value)
             points.append(CGPoint(x: columnXPoint(index), y: columnYPoint(value)))
         }
         
@@ -109,6 +114,15 @@ public class GraphView: UIView {
         }
     }
     
+    // Functions
+    
+    open func numberOfItems() -> Int {
+        return items.count
+    }
+    
+    open func item(atIndex index: Int) -> CGFloat {
+        return items[index]
+    }
 }
 
 public extension UIBezierPath {
