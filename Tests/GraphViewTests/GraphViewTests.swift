@@ -89,6 +89,10 @@ class GraphViewDataSourceTests: GraphViewDataSource {
         return items[index]
     }
     
+    func graphColor(in graphView: GraphView) -> UIColor {
+        UIColor.green
+    }
+    
     func graphView(_ graphView: GraphView, colorForVerticalLineAt index: Int) -> UIColor? {
         return index == items.count || index == 0 ? .red : .blue
     }

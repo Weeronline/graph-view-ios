@@ -5,8 +5,9 @@ import UIKit
 public protocol GraphViewDataSource: AnyObject {
     func numberOfItems(in graphView: GraphView) -> Int
     func graphView(_ graphView: GraphView, pointForItemAt index: Int) -> CGFloat
-    @objc optional func graphColor(in graphView: GraphView) -> UIColor
-    
+    func graphColor(in graphView: GraphView) -> UIColor
+    @objc optional func graphBorderColor(in graphView: GraphView) -> UIColor
+
     @objc optional func graphView(_ graphView: GraphView, colorForVerticalLineAt index: Int) -> UIColor?
     @objc optional func graphView(_ graphView: GraphView, colorForVerticalBarBackgroundAt index: Int) -> UIColor?
     
@@ -47,7 +48,6 @@ public class GraphView: UIView {
           return
         }
         
-        let context = UIGraphicsGetCurrentContext()
         
         barWidth = delegate?.graphView?(self, widthForBarAt: 0) ?? 20.0
         numberOfItems = dataSource.numberOfItems(in: self)
@@ -71,10 +71,9 @@ public class GraphView: UIView {
         }
         
         addGraphVerticalLines(size: rect.size, colors: verticalLinesColors)
-        addGraphPoints(size: rect.size)
+        addGraphPoints(size: rect.size, graphColor: dataSource.graphColor(in: self), borderColor: dataSource.graphBorderColor?(in: self))
         addGraphHorizontalLines(size: rect.size, horizontalLines: horizontalLines)
        
-        context?.saveGState()
     }
     
     public func reloadData() {
@@ -90,7 +89,14 @@ public class GraphView: UIView {
         })
     }
     
-    private func addGraphPoints(size: CGSize) {
+    private func addGraphPoints(size: CGSize, graphColor: UIColor, borderColor: UIColor?) {
+        let context = UIGraphicsGetCurrentContext()
+        
+        graphColor.setFill()
+        if let borderColor = borderColor {
+            borderColor.setStroke()
+        }
+
         let maxValue = 1
         
         let columnXPoint = { (column: Int) -> CGFloat in
@@ -111,8 +117,11 @@ public class GraphView: UIView {
         points.append(CGPoint(x:columnXPoint(points.count), y: columnYPoint(0)))
         
         let bezierPath = UIBezierPath(quadCurve: points)
-                
+        
         bezierPath?.fill()
+        bezierPath?.stroke()
+        
+        context?.saveGState()
     }
     
     private func addGraphVerticalLines(size: CGSize, colors: [UIColor?]) {
