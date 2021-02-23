@@ -41,15 +41,41 @@ final class GraphViewTests: XCTestCase {
         XCTAssertEqual(UIColor.red, firstBorder?.backgroundColor)
     }
     
+    func testHorizontalLines() {
+        let horizontalViews = graphView.subviews.filter { (view) -> Bool in
+            return view.accessibilityIdentifier?.contains("GraphHorizontalLine") == true
+        }
+        
+        XCTAssertEqual(horizontalViews.count, 3)
+        
+        let firstBarView = horizontalViews.first { (view) -> Bool in
+            view.accessibilityIdentifier == "GraphHorizontalLine0"
+        }
+        XCTAssertEqual(firstBarView?.backgroundColor, UIColor.white)
+        
+        let borderView = horizontalViews.first { (view) -> Bool in
+            view.accessibilityIdentifier == "GraphHorizontalLine1"
+        }
+        XCTAssertEqual(borderView?.backgroundColor, UIColor.blue)
+        
+        let lastBarView = horizontalViews.first { (view) -> Bool in
+            view.accessibilityIdentifier == "GraphHorizontalLine2"
+        }
+        XCTAssertEqual(lastBarView?.backgroundColor, UIColor.white)
+    }
+    
     static var allTests = [
         ("testDataSourceItems", testDataSourceItems),
         ("testDelegateBarsWidth", testDelegateBarsWidth),
         ("testBorderColors", testBorderColors),
+        ("testHorizontalLines", testHorizontalLines),
     ]
 }
 
 class GraphViewDataSourceTests: GraphViewDataSource {
     let items: [CGFloat]
+    
+    var horizontalLines: [CGFloat] = [0.0, 0.5, 1.0]
     
     init(items: [CGFloat]) {
         self.items = items
@@ -65,6 +91,18 @@ class GraphViewDataSourceTests: GraphViewDataSource {
     
     func graphView(_ graphView: GraphView, colorForVerticalLineAt index: Int) -> UIColor? {
         return index == items.count || index == 0 ? .red : .blue
+    }
+    
+    func numberOfHorizontalLines(in graphView: GraphView) -> Int {
+        return horizontalLines.count
+    }
+    
+    func graphView(_ graphView: GraphView, valueForHorizontalBarAt index: Int) -> CGFloat {
+        horizontalLines[index]
+    }
+    
+    func graphView(_ graphView: GraphView, colorForHorizontalBarAt index: Int) -> UIColor {
+        (index == horizontalLines.count - 1) || index == 0 ? .white : .blue
     }
 }
 

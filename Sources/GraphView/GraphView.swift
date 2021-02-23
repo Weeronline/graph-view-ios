@@ -11,8 +11,9 @@ public protocol GraphViewDataSource: AnyObject {
     @objc optional func graphView(_ graphView: GraphView, colorForVerticalBarBackgroundAt index: Int) -> UIColor?
     
     @objc optional func numberOfHorizontalLines(in graphView: GraphView) -> Int
-    @objc optional func graphView(_ graphView: GraphView, horizontalLineForItemAt index: Int) -> Double
-    @objc optional func horizontalLineColor(in graphView: GraphView) -> UIColor
+    @objc optional func graphView(_ graphView: GraphView, valueForHorizontalBarAt index: Int) -> CGFloat
+    @objc optional func graphView(_ graphView: GraphView, colorForHorizontalBarAt index: Int) -> UIColor
+
 }
 
 @objc
@@ -38,11 +39,7 @@ public class GraphView: UIView {
     }
     
     private var items = [CGFloat]()
-    private var widthConstraints = [NSLayoutConstraint]()
-    
-    private var temportalColorForVerticalLine: UIColor? = UIColor.red
-    private let temporalHorizontalLines: [CGFloat] = [0.0, 0.04, 0.2, 0.5, 0.88, 0.9, 1.0]
-    
+        
     public override func draw(_ rect: CGRect) {
         resetView()
                 
@@ -63,9 +60,19 @@ public class GraphView: UIView {
             dataSource.graphView?(self, colorForVerticalLineAt: index)
         }
         
+        let numberOfHorizontalLines = dataSource.numberOfHorizontalLines?(in: self) ?? 0
+        
+        let horizontalLines: [(value: CGFloat, color: UIColor)] = (0..<numberOfHorizontalLines).compactMap { (index) in
+            if let value = dataSource.graphView?(self, valueForHorizontalBarAt: index),
+               let color = dataSource.graphView?(self, colorForHorizontalBarAt: index) {
+                return (value: value, color: color)
+            }
+            return nil
+        }
+        
         addGraphVerticalLines(size: rect.size, colors: verticalLinesColors)
         addGraphPoints(size: rect.size)
-        addGraphHorizontalLines(size: rect.size)
+        addGraphHorizontalLines(size: rect.size, horizontalLines: horizontalLines)
        
         context?.saveGState()
     }
@@ -135,7 +142,6 @@ public class GraphView: UIView {
                 leadingConstraint = shapeLineView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0)
             }
             leadingConstraint.isActive = true
-            widthConstraints.append(leadingConstraint)
             
             shapeLineView.topAnchor.constraint(equalTo: topAnchor, constant: 0).isActive = true
             shapeLineView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0).isActive = true
@@ -144,18 +150,24 @@ public class GraphView: UIView {
         }
     }
     
-    private func addGraphHorizontalLines(size: CGSize) {
-        for index in 0..<temporalHorizontalLines.count {
-            let linePath = UIBezierPath()
+    private func addGraphHorizontalLines(size: CGSize, horizontalLines: [(value: CGFloat, color: UIColor)]) {
+        for (index, horizontalLine) in horizontalLines.enumerated() {
             
-            let line = temporalHorizontalLines[index]
-            let yAxis = size.height * (1 - line)
+            let yAxis = (size.height - 1.0) * horizontalLine.value
+
+            let shapeLineView = UIView(frame: CGRect.zero )
+            shapeLineView.accessibilityIdentifier = "GraphHorizontalLine\(index)"
             
-            linePath.move(to: CGPoint(x: 0, y: yAxis))
-            linePath.addLine(to: CGPoint(x: size.width, y: yAxis))
+            shapeLineView.backgroundColor = horizontalLine.color
             
-            linePath.lineWidth = 1.0
-            linePath.stroke()
+            shapeLineView.translatesAutoresizingMaskIntoConstraints = false
+            
+            addSubview(shapeLineView)
+            
+            shapeLineView.heightAnchor.constraint(equalToConstant: 1.0).isActive = true
+            shapeLineView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -yAxis).isActive = true
+            shapeLineView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0).isActive = true
+            shapeLineView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0).isActive = true
         }
     }
     
