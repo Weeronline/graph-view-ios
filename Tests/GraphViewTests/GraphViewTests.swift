@@ -16,7 +16,7 @@ final class GraphViewTests: XCTestCase {
         graphView.dataSource = graphViewDataSourceTests
         graphView.delegate = graphViewDelegateTests
         
-        graphView.draw(CGRect.zero)
+        graphView.reloadData()
     }
     
     override func tearDownWithError() throws {

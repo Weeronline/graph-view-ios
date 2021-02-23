@@ -31,6 +31,12 @@ public class GraphView: UIView {
     var isScrolling = false
     var barWidth: CGFloat = 60
     
+    public override var bounds: CGRect {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
+    
     private var items = [CGFloat]()
     private var widthConstraints = [NSLayoutConstraint]()
     
@@ -38,15 +44,17 @@ public class GraphView: UIView {
     private let temporalHorizontalLines: [CGFloat] = [0.0, 0.04, 0.2, 0.5, 0.88, 0.9, 1.0]
     
     public override func draw(_ rect: CGRect) {
-        guard let context = UIGraphicsGetCurrentContext(), let dataSource = dataSource else {
+        resetView()
+                
+        guard let dataSource = dataSource else {
           return
         }
         
+        let context = UIGraphicsGetCurrentContext()
+        
         barWidth = delegate?.graphView?(self, widthForBarAt: 0) ?? 20.0
         numberOfItems = dataSource.numberOfItems(in: self)
-        
-        resetView()
-        
+                
         items = (0..<numberOfItems).map { (index) in
             dataSource.graphView(self, pointForItemAt: index)
         }
@@ -59,15 +67,19 @@ public class GraphView: UIView {
         addGraphPoints(size: rect.size)
         addGraphHorizontalLines(size: rect.size)
        
-        context.saveGState()
+        context?.saveGState()
+    }
+    
+    public func reloadData() {
+        draw(self.bounds)
     }
     
     // MARK: - Drawing
     
     private func resetView() {
         items.removeAll()
-        layer.sublayers?.forEach({ (layer) in
-            layer.removeFromSuperlayer()
+        subviews.forEach({ (view) in
+            view.removeFromSuperview()
         })
     }
     
