@@ -33,10 +33,18 @@ final class GraphViewTests: XCTestCase {
     func testDelegateBarsWidth() {
         XCTAssertEqual(20, graphView.barWidth)
     }
-
+    
+    func testBorderColors() {
+        let firstBorder = graphView.subviews.first { (view) -> Bool in
+            view.accessibilityIdentifier == "GraphVerticalLine0"
+        }
+        XCTAssertEqual(UIColor.red, firstBorder?.backgroundColor)
+    }
+    
     static var allTests = [
         ("testDataSourceItems", testDataSourceItems),
         ("testDelegateBarsWidth", testDelegateBarsWidth),
+        ("testBorderColors", testBorderColors),
     ]
 }
 
@@ -53,6 +61,10 @@ class GraphViewDataSourceTests: GraphViewDataSource {
     
     func graphView(_ graphView: GraphView, pointForItemAt index: Int) -> CGFloat {
         return items[index]
+    }
+    
+    func graphView(_ graphView: GraphView, colorForVerticalLineAt index: Int) -> UIColor? {
+        return index == items.count || index == 0 ? .red : .blue
     }
 }
 

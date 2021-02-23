@@ -32,8 +32,8 @@ public class GraphView: UIView {
     var barWidth: CGFloat = 60
     
     private var items = [CGFloat]()
-
-    private var temporalNumberOfItems = 10
+    private var widthConstraints = [NSLayoutConstraint]()
+    
     private var temportalColorForVerticalLine: UIColor? = UIColor.red
     private let temporalHorizontalLines: [CGFloat] = [0.0, 0.04, 0.2, 0.5, 0.88, 0.9, 1.0]
     
@@ -41,23 +41,35 @@ public class GraphView: UIView {
         guard let context = UIGraphicsGetCurrentContext(), let dataSource = dataSource else {
           return
         }
-                  
-        barWidth = delegate?.graphView?(self, widthForBarAt: 0) ?? 20.0
         
+        barWidth = delegate?.graphView?(self, widthForBarAt: 0) ?? 20.0
         numberOfItems = dataSource.numberOfItems(in: self)
+        
+        resetView()
         
         items = (0..<numberOfItems).map { (index) in
             dataSource.graphView(self, pointForItemAt: index)
         }
         
+        let verticalLinesColors = (0...numberOfItems).map { (index) in
+            dataSource.graphView?(self, colorForVerticalLineAt: index)
+        }
+        
+        addGraphVerticalLines(size: rect.size, colors: verticalLinesColors)
         addGraphPoints(size: rect.size)
-        addGraphVerticalLines(size: rect.size)
         addGraphHorizontalLines(size: rect.size)
        
         context.saveGState()
     }
     
     // MARK: - Drawing
+    
+    private func resetView() {
+        items.removeAll()
+        layer.sublayers?.forEach({ (layer) in
+            layer.removeFromSuperlayer()
+        })
+    }
     
     private func addGraphPoints(size: CGSize) {
         let maxValue = 1
@@ -84,21 +96,39 @@ public class GraphView: UIView {
         bezierPath?.fill()
     }
     
-    private func addGraphVerticalLines(size: CGSize) {
-        for index in 0...temporalNumberOfItems {
-            guard let verticalLineColor = temportalColorForVerticalLine else {
+    private func addGraphVerticalLines(size: CGSize, colors: [UIColor?]) {
+        
+        var previousBarView: UIView?
+        
+        for (index, verticalLineColor) in colors.enumerated() {
+            guard let verticalLineColor = verticalLineColor else {
                 continue
             }
-
-            let linePath = UIBezierPath()
             
-            let xAxis = barWidth * CGFloat(index)
-            linePath.move(to: CGPoint(x: xAxis, y: 0))
-            linePath.addLine(to: CGPoint(x: xAxis, y: size.height))
+            let shapeLineView = UIView(frame: CGRect.zero )
+            shapeLineView.accessibilityIdentifier = "GraphVerticalLine\(index)"
             
-            verticalLineColor.setStroke()
-            linePath.lineWidth = 1.0
-            linePath.stroke()
+            shapeLineView.backgroundColor = verticalLineColor
+            
+            shapeLineView.translatesAutoresizingMaskIntoConstraints = false
+            
+            addSubview(shapeLineView)
+            
+            shapeLineView.widthAnchor.constraint(equalToConstant: 1.0).isActive = true
+            
+            let leadingConstraint: NSLayoutConstraint!
+            if let previousBarView = previousBarView {
+                leadingConstraint = shapeLineView.leadingAnchor.constraint(equalTo: previousBarView.trailingAnchor, constant: barWidth - 1.0)
+            } else {
+                leadingConstraint = shapeLineView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0)
+            }
+            leadingConstraint.isActive = true
+            widthConstraints.append(leadingConstraint)
+            
+            shapeLineView.topAnchor.constraint(equalTo: topAnchor, constant: 0).isActive = true
+            shapeLineView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0).isActive = true
+            
+            previousBarView = shapeLineView
         }
     }
     
