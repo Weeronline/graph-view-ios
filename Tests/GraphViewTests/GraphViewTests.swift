@@ -35,10 +35,17 @@ final class GraphViewTests: XCTestCase {
     }
     
     func testBorderColors() {
-        let firstBorder = graphView.subviews.first { (view) -> Bool in
+        let firstBarView = graphView.subviews.first { (view) -> Bool in
             view.accessibilityIdentifier == "GraphVerticalLine0"
         }
-        XCTAssertEqual(UIColor.red, firstBorder?.backgroundColor)
+        let borderLeadingView = firstBarView?.subviews.first { (view) -> Bool in
+            view.accessibilityIdentifier == "BorderLeadingView"
+        }
+        let borderTrailingView = firstBarView?.subviews.first { (view) -> Bool in
+            view.accessibilityIdentifier == "BorderTrailingView"
+        }
+        XCTAssertEqual(UIColor.red, borderLeadingView?.backgroundColor)
+        XCTAssertEqual(UIColor.blue, borderTrailingView?.backgroundColor)
     }
     
     func testHorizontalLines() {
