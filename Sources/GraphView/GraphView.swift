@@ -19,8 +19,8 @@ public protocol GraphViewDataSource: AnyObject {
 
 @objc
 public protocol GraphViewDelegate: AnyObject {
-    @objc optional func graphView(_ graphView: GraphView, didSelectBarAt index: Int)
     @objc optional func graphView(_ graphView: GraphView, widthForBarAt index: Int) -> CGFloat
+    @objc optional func graphView(_ graphView: GraphView, didSelectBarAt index: Int)
 }
 
 public class GraphView: UIView {
@@ -30,8 +30,8 @@ public class GraphView: UIView {
 
     open private(set) var numberOfItems: Int = 0
     
-    var isScrolling = false
-    var barWidth: CGFloat = 60
+    private(set) var isScrolling = false
+    private(set) var barWidth: CGFloat = 60
     
     public override var bounds: CGRect {
         didSet {
@@ -40,7 +40,7 @@ public class GraphView: UIView {
     }
     
     private var items = [CGFloat]()
-        
+    
     public override func draw(_ rect: CGRect) {
         resetView()
                 
@@ -214,7 +214,36 @@ public class GraphView: UIView {
         }
     }
     
-    // Functions
+    // MARK: - UI Responder Events
+    
+    public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let location = touches.first?.location(in: self), let delegate = delegate else {
+            return
+        }
+        isScrolling = false
+        let index = Int(location.x / barWidth)
+        delegate.graphView?(self, didSelectBarAt: index)
+    }
+    
+    public override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesMoved(touches, with: event)
+        guard let location = touches.first?.location(in: self), let delegate = delegate else {
+            return
+        }
+        
+        if location.x > 0 && location.x < self.frame.width {
+            isScrolling = abs(location.x) < abs(location.y)
+            let index = Int(location.x / barWidth)
+            delegate.graphView?(self, didSelectBarAt: index)
+        }
+    }
+    
+    public override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesEnded(touches, with: event)
+        isScrolling = false
+    }
+    
+    // MARK: - Functions
     
     open func item(atIndex index: Int) -> CGFloat {
         return items[index]
