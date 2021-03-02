@@ -24,7 +24,9 @@ public protocol GraphViewDelegate: AnyObject {
 }
 
 public class GraphView: UIView {
-    
+
+    private let borderWidth: CGFloat = 1.0
+
     @IBOutlet weak var dataSource: GraphViewDataSource?
     @IBOutlet weak var delegate: GraphViewDelegate?
 
@@ -137,7 +139,7 @@ public class GraphView: UIView {
         
         currentSuperView.addSubview(borderView)
         
-        borderView.widthAnchor.constraint(equalToConstant: 1.0).isActive = true
+        borderView.widthAnchor.constraint(equalToConstant: borderWidth).isActive = true
         borderView.topAnchor.constraint(equalTo: currentSuperView.topAnchor, constant: 0).isActive = true
         borderView.bottomAnchor.constraint(equalTo: currentSuperView.bottomAnchor, constant: 0).isActive = true
         if isTrailing {
@@ -207,7 +209,7 @@ public class GraphView: UIView {
             
             addSubview(shapeLineView)
             
-            shapeLineView.heightAnchor.constraint(equalToConstant: 1.0).isActive = true
+            shapeLineView.heightAnchor.constraint(equalToConstant: borderWidth).isActive = true
             shapeLineView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -yAxis).isActive = true
             shapeLineView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0).isActive = true
             shapeLineView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: 0).isActive = true
@@ -233,7 +235,7 @@ public class GraphView: UIView {
         
         if location.x > 0 && location.x < self.frame.width {
             isScrolling = abs(location.x) < abs(location.y)
-            let index = Int(location.x / barWidth)
+            let index = Int(location.x / (barWidth - borderWidth))
             delegate.graphView?(self, didSelectBarAt: index)
         }
     }
