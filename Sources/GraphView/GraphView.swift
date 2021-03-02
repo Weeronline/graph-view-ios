@@ -25,8 +25,10 @@ public protocol GraphViewDelegate: AnyObject {
 
 public class GraphView: UIView {
 
+    private let maxValue = 1
     private let borderWidth: CGFloat = 1.0
-
+    private var items = [CGFloat]()
+    
     @IBOutlet weak var dataSource: GraphViewDataSource?
     @IBOutlet weak var delegate: GraphViewDelegate?
 
@@ -40,8 +42,6 @@ public class GraphView: UIView {
             setNeedsDisplay()
         }
     }
-    
-    private var items = [CGFloat]()
     
     public override func draw(_ rect: CGRect) {
         resetView()
@@ -95,22 +95,13 @@ public class GraphView: UIView {
         })
     }
     
-    private func addGraphPoints(size: CGSize, graphColor: UIColor, borderColor: UIColor?) {
-        let context = UIGraphicsGetCurrentContext()
-        
-        graphColor.setFill()
-        if let borderColor = borderColor {
-            borderColor.setStroke()
-        }
-
-        let maxValue = 1
-        
+    private func fixPoints(size: CGSize) -> [CGPoint] {
         let columnXPoint = { (column: Int) -> CGFloat in
             return self.barWidth * CGFloat(column)
         }
         
         let columnYPoint = { (graphPoint: CGFloat) -> CGFloat in
-            let yPoint = graphPoint / CGFloat(maxValue) * size.height
+            let yPoint = graphPoint / CGFloat(self.maxValue) * size.height
             return size.height - yPoint
         }
         
@@ -122,6 +113,18 @@ public class GraphView: UIView {
         points.insert(CGPoint(x:columnXPoint(0), y: columnYPoint(0)), at: 0)
         points.append(CGPoint(x:columnXPoint(points.count), y: columnYPoint(0)))
         
+        return points
+    }
+    
+    private func addGraphPoints(size: CGSize, graphColor: UIColor, borderColor: UIColor?) {
+        let context = UIGraphicsGetCurrentContext()
+        
+        graphColor.setFill()
+        if let borderColor = borderColor {
+            borderColor.setStroke()
+        }
+        
+        let points = fixPoints(size: size)
         let bezierPath = UIBezierPath(quadCurve: points)
         
         bezierPath?.fill()
@@ -130,6 +133,21 @@ public class GraphView: UIView {
         context?.saveGState()
     }
     
+    fileprivate func addGraphVerticalBarView(backgroundColor: UIColor?, index: Int) -> UIView {
+        
+        let shapeLineView = UIView(frame: CGRect.zero )
+        shapeLineView.accessibilityIdentifier = "GraphVerticalLine\(index)"
+        
+        if let backgroundColor = backgroundColor {
+            shapeLineView.backgroundColor = backgroundColor
+        }
+        
+        shapeLineView.translatesAutoresizingMaskIntoConstraints = false
+        
+        return shapeLineView
+        
+    }
+
     fileprivate func addBorderView(color: UIColor, currentSuperView: UIView, isTrailing: Bool = true) {
         
         let borderView = UIView(frame: CGRect.zero )
@@ -139,16 +157,23 @@ public class GraphView: UIView {
         
         currentSuperView.addSubview(borderView)
         
-        borderView.widthAnchor.constraint(equalToConstant: borderWidth).isActive = true
-        borderView.topAnchor.constraint(equalTo: currentSuperView.topAnchor, constant: 0).isActive = true
-        borderView.bottomAnchor.constraint(equalTo: currentSuperView.bottomAnchor, constant: 0).isActive = true
+        
+        var horizontalPositionConstraint: NSLayoutConstraint!
+
         if isTrailing {
-            borderView.trailingAnchor.constraint(equalTo: currentSuperView.trailingAnchor, constant: 0).isActive = true
+            horizontalPositionConstraint = borderView.trailingAnchor.constraint(equalTo: currentSuperView.trailingAnchor, constant: 0)
             borderView.accessibilityIdentifier = "BorderTrailingView"
         } else {
-            borderView.leadingAnchor.constraint(equalTo: currentSuperView.leadingAnchor, constant: 0).isActive = true
+            horizontalPositionConstraint = borderView.leadingAnchor.constraint(equalTo: currentSuperView.leadingAnchor, constant: 0)
             borderView.accessibilityIdentifier = "BorderLeadingView"
         }
+        
+        NSLayoutConstraint.activate([
+            horizontalPositionConstraint,
+            borderView.widthAnchor.constraint(equalToConstant: borderWidth),
+            borderView.topAnchor.constraint(equalTo: currentSuperView.topAnchor, constant: 0),
+            borderView.bottomAnchor.constraint(equalTo: currentSuperView.bottomAnchor, constant: 0)
+        ])
     }
     
     private func addGraphVerticalLines(size: CGSize, borderColors: [UIColor?], backgroundColors: [UIColor?]) {
@@ -160,36 +185,28 @@ public class GraphView: UIView {
                 continue
             }
             
-            let shapeLineView = UIView(frame: CGRect.zero )
-            shapeLineView.accessibilityIdentifier = "GraphVerticalLine\(index)"
-            
-            if let backgroundColor = backgroundColors[index] {
-                shapeLineView.backgroundColor = backgroundColor
-            }
-            
-            shapeLineView.translatesAutoresizingMaskIntoConstraints = false
+            let shapeLineView = addGraphVerticalBarView(backgroundColor: backgroundColors[index], index: index)
             
             addSubview(shapeLineView)
-            
-            shapeLineView.widthAnchor.constraint(equalToConstant: barWidth).isActive = true
             
             let leadingConstraint: NSLayoutConstraint!
             if let previousBarView = previousBarView {
                 leadingConstraint = shapeLineView.leadingAnchor.constraint(equalTo: previousBarView.trailingAnchor, constant: 0)
             } else {
                 leadingConstraint = shapeLineView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0)
-                
-                if let color = borderColors[0] {
-                    addBorderView(color: color, currentSuperView: shapeLineView, isTrailing: false)
-                }
             }
             
-            addBorderView(color: verticalLineColor, currentSuperView: shapeLineView)
-
-            leadingConstraint.isActive = true
+            NSLayoutConstraint.activate([
+                shapeLineView.widthAnchor.constraint(equalToConstant: barWidth),
+                leadingConstraint,
+                shapeLineView.topAnchor.constraint(equalTo: topAnchor, constant: 0),
+                shapeLineView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0)
+            ])
             
-            shapeLineView.topAnchor.constraint(equalTo: topAnchor, constant: 0).isActive = true
-            shapeLineView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0).isActive = true
+            if index == 0, let color = borderColors[0] {
+                addBorderView(color: color, currentSuperView: shapeLineView, isTrailing: false)
+            }
+            addBorderView(color: verticalLineColor, currentSuperView: shapeLineView)
             
             previousBarView = shapeLineView
         }
