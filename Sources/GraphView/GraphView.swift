@@ -10,7 +10,8 @@ public protocol GraphViewDataSource: AnyObject {
 
     @objc optional func graphView(_ graphView: GraphView, colorForVerticalLineAt index: Int) -> UIColor?
     @objc optional func graphView(_ graphView: GraphView, colorForVerticalBarBackgroundAt index: Int) -> UIColor?
-    
+    @objc optional func graphView(_ graphView: GraphView, layerForVerticalBarBackgroundAt index: Int) -> CALayer?
+
     @objc optional func numberOfHorizontalLines(in graphView: GraphView) -> Int
     @objc optional func graphView(_ graphView: GraphView, valueForHorizontalBarAt index: Int) -> CGFloat
     @objc optional func graphView(_ graphView: GraphView, colorForHorizontalBarAt index: Int) -> UIColor
@@ -62,6 +63,10 @@ public class GraphView: UIView {
             dataSource.graphView?(self, colorForVerticalLineAt: index)
         }
         
+        let verticalLinesLayers = (0...numberOfItems).map { (index) in
+            dataSource.graphView?(self, layerForVerticalBarBackgroundAt: index)
+        }
+        
         let backgroundColors = (0..<numberOfItems).map { (index) in
             dataSource.graphView?(self, colorForVerticalBarBackgroundAt: index)
         }
@@ -76,7 +81,7 @@ public class GraphView: UIView {
             return nil
         }
         
-        addGraphVerticalLines(size: rect.size, borderColors: verticalLinesColors, backgroundColors: backgroundColors)
+        addGraphVerticalLines(size: rect.size, borderColors: verticalLinesColors, layers: verticalLinesLayers, backgroundColors: backgroundColors)
         addGraphPoints(size: rect.size, graphColor: dataSource.graphColor(in: self), borderColor: dataSource.graphBorderColor?(in: self))
         addGraphHorizontalLines(size: rect.size, horizontalLines: horizontalLines)
        
@@ -133,13 +138,21 @@ public class GraphView: UIView {
         context?.saveGState()
     }
     
-    fileprivate func addGraphVerticalBarView(backgroundColor: UIColor?, index: Int) -> UIView {
+    fileprivate func addGraphVerticalBarView(backgroundColor: UIColor?, layer: CALayer?, index: Int) -> UIView {
         
-        let shapeLineView = UIView(frame: CGRect.zero )
+        let shapeLineView = UIView(frame: CGRect(x: 0, y: 0, width: 30, height: 100) )
         shapeLineView.accessibilityIdentifier = "GraphVerticalLine\(index)"
         
         if let backgroundColor = backgroundColor {
             shapeLineView.backgroundColor = backgroundColor
+        }
+        
+        if let layer = layer {
+            layer.needsDisplayOnBoundsChange = true
+            Timer.scheduledTimer(withTimeInterval: 0.01, repeats: false) { (timer) in
+                layer.frame = shapeLineView.bounds
+            }
+            shapeLineView.layer.addSublayer(layer)
         }
         
         shapeLineView.translatesAutoresizingMaskIntoConstraints = false
@@ -176,7 +189,7 @@ public class GraphView: UIView {
         ])
     }
     
-    private func addGraphVerticalLines(size: CGSize, borderColors: [UIColor?], backgroundColors: [UIColor?]) {
+    private func addGraphVerticalLines(size: CGSize, borderColors: [UIColor?], layers: [CALayer?], backgroundColors: [UIColor?]) {
         
         var previousBarView: UIView?
         
@@ -185,7 +198,7 @@ public class GraphView: UIView {
                 continue
             }
             
-            let shapeLineView = addGraphVerticalBarView(backgroundColor: backgroundColors[index], index: index)
+            let shapeLineView = addGraphVerticalBarView(backgroundColor: backgroundColors[index], layer: layers[index], index: index)
             
             addSubview(shapeLineView)
             
