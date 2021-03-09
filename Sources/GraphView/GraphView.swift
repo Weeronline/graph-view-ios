@@ -149,7 +149,11 @@ public class GraphView: UIView {
         
         if let layer = layer {
             layer.needsDisplayOnBoundsChange = true
-            Timer.scheduledTimer(withTimeInterval: 0.01, repeats: false) { (timer) in
+            if #available(iOS 10.0, *) {
+                Timer.scheduledTimer(withTimeInterval: 0.01, repeats: false) { (timer) in
+                    layer.frame = shapeLineView.bounds
+                }
+            } else {
                 layer.frame = shapeLineView.bounds
             }
             shapeLineView.layer.addSublayer(layer)
