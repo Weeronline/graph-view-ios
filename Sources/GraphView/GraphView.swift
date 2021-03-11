@@ -81,6 +81,7 @@ public class GraphView: UIView {
             return nil
         }
         
+        addGraphVerticalBackgroundBars(size: rect.size, layers: verticalLinesLayers)
         addGraphHorizontalLines(size: rect.size, horizontalLines: horizontalLines)
         addGraphVerticalLines(size: rect.size, borderColors: verticalLinesColors, layers: verticalLinesLayers, backgroundColors: backgroundColors)
         addGraphPoints(size: rect.size, graphColor: dataSource.graphColor(in: self), borderColor: dataSource.graphBorderColor?(in: self))
@@ -146,12 +147,6 @@ public class GraphView: UIView {
             shapeLineView.backgroundColor = backgroundColor
         }
         
-        if let layer = layer {
-            layer.needsDisplayOnBoundsChange = true
-            layer.frame = shapeLineView.bounds
-            shapeLineView.layer.addSublayer(layer)
-        }
-        
         shapeLineView.translatesAutoresizingMaskIntoConstraints = false
         
         return shapeLineView
@@ -184,6 +179,40 @@ public class GraphView: UIView {
             borderView.topAnchor.constraint(equalTo: currentSuperView.topAnchor, constant: 0),
             borderView.bottomAnchor.constraint(equalTo: currentSuperView.bottomAnchor, constant: 0)
         ])
+    }
+    
+    private func addGraphVerticalBackgroundBars(size: CGSize, layers: [CALayer?]) {
+        
+        var previousBarView: UIView?
+        
+        for (index, layer) in layers.enumerated() {
+            let shapeLineView = addGraphVerticalBarView(backgroundColor: nil, layer: layers[index], index: index, size: CGSize(width: barWidth, height: bounds.height))
+            
+            addSubview(shapeLineView)
+            
+            
+            if let layer = layer {
+                layer.needsDisplayOnBoundsChange = true
+                layer.frame = shapeLineView.bounds
+                shapeLineView.layer.addSublayer(layer)
+            }
+            
+            let leadingConstraint: NSLayoutConstraint!
+            if let previousBarView = previousBarView {
+                leadingConstraint = shapeLineView.leadingAnchor.constraint(equalTo: previousBarView.trailingAnchor, constant: 0)
+            } else {
+                leadingConstraint = shapeLineView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 0)
+            }
+            
+            NSLayoutConstraint.activate([
+                shapeLineView.widthAnchor.constraint(equalToConstant: barWidth),
+                leadingConstraint,
+                shapeLineView.topAnchor.constraint(equalTo: topAnchor, constant: 0),
+                shapeLineView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: 0)
+            ])
+            
+            previousBarView = shapeLineView
+        }
     }
     
     private func addGraphVerticalLines(size: CGSize, borderColors: [UIColor?], layers: [CALayer?], backgroundColors: [UIColor?]) {
