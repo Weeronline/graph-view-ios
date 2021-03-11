@@ -81,9 +81,9 @@ public class GraphView: UIView {
             return nil
         }
         
+        addGraphHorizontalLines(size: rect.size, horizontalLines: horizontalLines)
         addGraphVerticalLines(size: rect.size, borderColors: verticalLinesColors, layers: verticalLinesLayers, backgroundColors: backgroundColors)
         addGraphPoints(size: rect.size, graphColor: dataSource.graphColor(in: self), borderColor: dataSource.graphBorderColor?(in: self))
-        addGraphHorizontalLines(size: rect.size, horizontalLines: horizontalLines)
        
     }
     
