@@ -84,11 +84,10 @@ public class GraphView: UIView {
         addGraphHorizontalLines(size: rect.size, horizontalLines: horizontalLines)
         addGraphVerticalLines(size: rect.size, borderColors: verticalLinesColors, layers: verticalLinesLayers, backgroundColors: backgroundColors)
         addGraphPoints(size: rect.size, graphColor: dataSource.graphColor(in: self), borderColor: dataSource.graphBorderColor?(in: self))
-       
     }
     
     public func reloadData() {
-        draw(self.bounds)
+        setNeedsDisplay()
     }
     
     // MARK: - Drawing
@@ -138,9 +137,9 @@ public class GraphView: UIView {
         context?.saveGState()
     }
     
-    fileprivate func addGraphVerticalBarView(backgroundColor: UIColor?, layer: CALayer?, index: Int) -> UIView {
+    fileprivate func addGraphVerticalBarView(backgroundColor: UIColor?, layer: CALayer?, index: Int, size: CGSize) -> UIView {
         
-        let shapeLineView = UIView(frame: CGRect(x: 0, y: 0, width: 30, height: 100) )
+        let shapeLineView = UIView(frame: CGRect(x: 0, y: 0, width: size.width, height: size.height) )
         shapeLineView.accessibilityIdentifier = "GraphVerticalLine\(index)"
         
         if let backgroundColor = backgroundColor {
@@ -149,13 +148,7 @@ public class GraphView: UIView {
         
         if let layer = layer {
             layer.needsDisplayOnBoundsChange = true
-            if #available(iOS 10.0, *) {
-                Timer.scheduledTimer(withTimeInterval: 0.01, repeats: false) { (timer) in
-                    layer.frame = shapeLineView.bounds
-                }
-            } else {
-                layer.frame = shapeLineView.bounds
-            }
+            layer.frame = shapeLineView.bounds
             shapeLineView.layer.addSublayer(layer)
         }
         
@@ -202,7 +195,7 @@ public class GraphView: UIView {
                 continue
             }
             
-            let shapeLineView = addGraphVerticalBarView(backgroundColor: backgroundColors[index], layer: layers[index], index: index)
+            let shapeLineView = addGraphVerticalBarView(backgroundColor: backgroundColors[index], layer: layers[index], index: index, size: CGSize(width: barWidth, height: bounds.height))
             
             addSubview(shapeLineView)
             
