@@ -308,6 +308,12 @@ public class GraphView: UIView {
     }
 }
 
+extension GraphView:  UIGestureRecognizerDelegate {
+    public override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        return !isScrolling
+    }
+}
+
 public extension UIBezierPath {
     
     convenience init?(quadCurve points: [CGPoint]) {
